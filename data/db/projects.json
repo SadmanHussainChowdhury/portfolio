@@ -47,7 +47,8 @@
     ],
     "githubUrl": "https://github.com/SadmanHussainChowdhury",
     "featured": false,
-    "category": "web"
+    "category": "web",
+    "liveUrl": "https://luxary-shop-ecomerce.vercel.app/"
   },
   {
     "id": "4",

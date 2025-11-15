@@ -1,16 +1,39 @@
 'use client'
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Briefcase } from "lucide-react"
+import { Calendar, MapPin } from "lucide-react"
 import { GlassCard } from "@/components/glass-card"
-import { experiences } from "@/data/experience"
+import { Experience } from "@/types"
 
 /**
  * Experience Section Component
- * Displays professional work experience
+ * Displays professional work experience - Dynamic from API
  */
 export function ExperienceSection() {
+  const [experiences, setExperiences] = useState<Experience[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/portfolio/experience')
+      .then(res => res.json())
+      .then(data => {
+        setExperiences(data.experiences || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <section id="experience" className="py-20 md:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">Loading experience...</div>
+        </div>
+      </section>
+    )
+  }
   return (
     <section id="experience" className="py-20 md:py-32 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

@@ -1,18 +1,41 @@
 'use client'
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
 import { Calendar, Clock } from "lucide-react"
 import { GlassCard } from "@/components/glass-card"
-import { blogPosts } from "@/data/blog"
+import { BlogPost } from "@/types"
 
 /**
  * Blog Section Component
- * Displays blog posts
+ * Displays blog posts - Dynamic from API
  */
 export function BlogSection() {
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/portfolio/blog')
+      .then(res => res.json())
+      .then(data => {
+        setBlogPosts(data.blogPosts || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <section id="blog" className="py-20 md:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">Loading blog posts...</div>
+        </div>
+      </section>
+    )
+  }
   return (
     <section id="blog" className="py-20 md:py-32 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

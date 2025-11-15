@@ -1,15 +1,38 @@
 'use client'
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { GlassCard } from "@/components/glass-card"
-import { services } from "@/data/services"
+import { Service } from "@/types"
 
 /**
  * Services Section Component
- * Displays services offered
+ * Displays services offered - Dynamic from API
  */
 export function ServicesSection() {
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/portfolio/services')
+      .then(res => res.json())
+      .then(data => {
+        setServices(data.services || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <section id="services" className="py-20 md:py-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">Loading services...</div>
+        </div>
+      </section>
+    )
+  }
   return (
     <section id="services" className="py-20 md:py-32">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

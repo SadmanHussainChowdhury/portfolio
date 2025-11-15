@@ -1,16 +1,40 @@
 'use client'
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { GlassCard } from "@/components/glass-card"
-import { skills } from "@/data/skills"
 import { cn } from "@/lib/utils"
+import { Skill } from "@/types"
 
 /**
  * Skills Section Component
- * Displays technical skills organized by category
+ * Displays technical skills organized by category - Dynamic from API
  */
 export function SkillsSection() {
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/portfolio/skills')
+      .then(res => res.json())
+      .then(data => {
+        setSkills(data.skills || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <section id="skills" className="py-20 md:py-32 relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">Loading skills...</div>
+        </div>
+      </section>
+    )
+  }
+
   const skillCategories = {
     language: skills.filter(s => s.category === 'language'),
     framework: skills.filter(s => s.category === 'framework'),

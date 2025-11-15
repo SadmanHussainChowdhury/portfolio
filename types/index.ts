@@ -21,8 +21,9 @@ export interface Experience {
   position: string
   startDate: string
   endDate: string | null
-  description: string[]
-  technologies: string[]
+  description?: string[]
+  responsibilities?: string[]
+  technologies?: string[]
   location?: string
 }
 
