@@ -29,7 +29,17 @@ export function ExperienceSection() {
     return (
       <section id="experience" className="py-20 md:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">Loading experience...</div>
+          <div className="text-center text-muted-foreground">Loading experience...</div>
+        </div>
+      </section>
+    )
+  }
+
+  if (experiences.length === 0) {
+    return (
+      <section id="experience" className="py-20 md:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-muted-foreground">No experience entries available at the moment.</div>
         </div>
       </section>
     )

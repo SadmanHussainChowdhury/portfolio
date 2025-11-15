@@ -109,7 +109,17 @@ export function ProjectsSection() {
     return (
       <section id="projects" className="py-20 md:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">Loading projects...</div>
+          <div className="text-center text-muted-foreground">Loading projects...</div>
+        </div>
+      </section>
+    )
+  }
+
+  if (projects.length === 0) {
+    return (
+      <section id="projects" className="py-20 md:py-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-muted-foreground">No projects available at the moment.</div>
         </div>
       </section>
     )

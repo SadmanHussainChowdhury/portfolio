@@ -31,7 +31,17 @@ export function BlogSection() {
     return (
       <section id="blog" className="py-20 md:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">Loading blog posts...</div>
+          <div className="text-center text-muted-foreground">Loading blog posts...</div>
+        </div>
+      </section>
+    )
+  }
+
+  if (blogPosts.length === 0) {
+    return (
+      <section id="blog" className="py-20 md:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-muted-foreground">No blog posts available at the moment.</div>
         </div>
       </section>
     )

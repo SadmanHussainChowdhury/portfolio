@@ -28,7 +28,17 @@ export function ServicesSection() {
     return (
       <section id="services" className="py-20 md:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">Loading services...</div>
+          <div className="text-center text-muted-foreground">Loading services...</div>
+        </div>
+      </section>
+    )
+  }
+
+  if (services.length === 0) {
+    return (
+      <section id="services" className="py-20 md:py-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-muted-foreground">No services available at the moment.</div>
         </div>
       </section>
     )

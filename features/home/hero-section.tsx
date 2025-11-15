@@ -12,20 +12,32 @@ import { SITE_CONFIG } from "@/lib/constants"
  * Main landing section with introduction and CTA - Dynamic Resume
  */
 export function HeroSection() {
-  const [resumeUrl, setResumeUrl] = useState(SITE_CONFIG.resumeUrl)
+  const [config, setConfig] = useState({
+    name: SITE_CONFIG.name,
+    title: SITE_CONFIG.title,
+    description: SITE_CONFIG.description,
+    resumeUrl: SITE_CONFIG.resumeUrl,
+  })
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    // Fetch dynamic config for resume URL
+    // Fetch dynamic config
     fetch('/api/portfolio/config')
       .then(res => res.json())
       .then(data => {
-        if (data.config?.resumeUrl) {
-          setResumeUrl(data.config.resumeUrl)
+        if (data.config) {
+          setConfig({
+            name: data.config.name || SITE_CONFIG.name,
+            title: data.config.title || SITE_CONFIG.title,
+            description: data.config.description || SITE_CONFIG.description,
+            resumeUrl: data.config.resumeUrl || SITE_CONFIG.resumeUrl,
+          })
         }
+        setLoading(false)
       })
       .catch(() => {
         // Fallback to default if API fails
-        setResumeUrl(SITE_CONFIG.resumeUrl)
+        setLoading(false)
       })
   }, [])
 
@@ -90,7 +102,7 @@ export function HeroSection() {
               transition={{ delay: 0.3, duration: 0.8, type: "spring", stiffness: 100 }}
               className="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-8 gradient-text leading-tight"
             >
-              {SITE_CONFIG.name}
+              {loading ? SITE_CONFIG.name : config.name}
             </motion.h1>
             
             <motion.p
@@ -99,7 +111,7 @@ export function HeroSection() {
               transition={{ delay: 0.4, duration: 0.8 }}
               className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6 text-foreground/90"
             >
-              {SITE_CONFIG.title}
+              {loading ? SITE_CONFIG.title : config.title}
             </motion.p>
             
             <motion.p
@@ -108,7 +120,7 @@ export function HeroSection() {
               transition={{ delay: 0.5, duration: 0.8 }}
               className="text-base md:text-lg lg:text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed"
             >
-              {SITE_CONFIG.description}
+              {loading ? SITE_CONFIG.description : config.description}
             </motion.p>
             
             <motion.div
@@ -133,7 +145,7 @@ export function HeroSection() {
                 asChild
                 className="group border-2 hover:border-primary/50 px-8 py-6 text-lg font-semibold backdrop-blur-sm"
               >
-                <a href={resumeUrl} download target="_blank" rel="noopener noreferrer">
+                <a href={config.resumeUrl} download target="_blank" rel="noopener noreferrer">
                   <Download className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
                   Download Resume
                 </a>

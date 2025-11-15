@@ -29,7 +29,17 @@ export function SkillsSection() {
     return (
       <section id="skills" className="py-20 md:py-32 relative overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">Loading skills...</div>
+          <div className="text-center text-muted-foreground">Loading skills...</div>
+        </div>
+      </section>
+    )
+  }
+
+  if (skills.length === 0) {
+    return (
+      <section id="skills" className="py-20 md:py-32 relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-muted-foreground">No skills available at the moment.</div>
         </div>
       </section>
     )
