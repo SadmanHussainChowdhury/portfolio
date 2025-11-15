@@ -27,12 +27,13 @@ export async function PUT(request: NextRequest) {
     }
 
     const updates = await request.json()
-    const config = db.read('config')
+    const config = db.read<{ id?: string }>('config')
     
     if (config.length === 0) {
-      db.create('config', updates)
+      db.create('config', { ...updates, id: 'config' })
     } else {
-      db.update('config', config[0].id || 'config', updates)
+      const configId = (config[0] as { id?: string }).id || 'config'
+      db.update('config', configId, updates)
     }
     
     const updated = db.read('config')[0]

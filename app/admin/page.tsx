@@ -45,12 +45,14 @@ export default function AdminPanel() {
 
   useEffect(() => {
     checkAuth()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (authenticated) {
       loadData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, activeTab])
 
   const checkAuth = async () => {
