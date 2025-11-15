@@ -2,20 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, initializeDB } from '@/lib/db'
 
 let initialized = false
-if (!initialized) {
-  initializeDB()
-  initialized = true
-}
+const initPromise = initializeDB()
 
 export async function GET(request: NextRequest) {
   try {
+    await initPromise
     // Check authentication
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const messages = db.read('messages')
+    const messages = await db.read('messages')
     // Sort by newest first
     const sortedMessages = messages.sort((a: any, b: any) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -32,13 +30,14 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id, ...updates } = await request.json()
-    const updated = db.update('messages', id, updates)
+    const updated = await db.update('messages', id, updates)
     
     if (!updated) {
       return NextResponse.json({ error: 'Message not found' }, { status: 404 })
@@ -55,13 +54,14 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await request.json()
-    const deleted = db.delete('messages', id)
+    const deleted = await db.delete('messages', id)
     
     if (!deleted) {
       return NextResponse.json({ error: 'Message not found' }, { status: 404 })
@@ -75,4 +75,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-

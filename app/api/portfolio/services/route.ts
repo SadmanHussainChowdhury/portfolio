@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, initializeDB } from '@/lib/db'
 
 let initialized = false
-if (!initialized) {
-  initializeDB()
-  initialized = true
-}
+const initPromise = initializeDB()
 
 export async function GET() {
   try {
-    const services = db.read('services')
+    await initPromise
+    const services = await db.read('services')
     return NextResponse.json({ services })
   } catch (error) {
     return NextResponse.json(
@@ -21,6 +19,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
       id: service.id || `service-${Date.now()}`,
     }
     
-    const created = db.create('services', newService)
+    const created = await db.create('services', newService)
     return NextResponse.json({ service: created }, { status: 201 })
   } catch (error) {
     return NextResponse.json(
@@ -44,13 +43,14 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id, ...updates } = await request.json()
-    const updated = db.update('services', id, updates)
+    const updated = await db.update('services', id, updates)
     
     if (!updated) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 })
@@ -67,6 +67,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -79,7 +80,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
 
-    const deleted = db.delete('services', id)
+    const deleted = await db.delete('services', id)
     if (!deleted) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 })
     }
@@ -92,4 +93,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-

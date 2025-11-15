@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, initializeDB } from '@/lib/db'
 
 let initialized = false
-if (!initialized) {
-  initializeDB()
-  initialized = true
-}
+const initPromise = initializeDB()
 
 export async function GET() {
   try {
-    const blogPosts = db.read('blog')
+    await initPromise
+    const blogPosts = await db.read('blog')
     return NextResponse.json({ blogPosts })
   } catch (error) {
     return NextResponse.json(
@@ -21,6 +19,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest) {
       publishedAt: blogPost.publishedAt || new Date().toISOString(),
     }
     
-    const created = db.create('blog', newPost)
+    const created = await db.create('blog', newPost)
     return NextResponse.json({ blogPost: created }, { status: 201 })
   } catch (error) {
     return NextResponse.json(
@@ -45,13 +44,14 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id, ...updates } = await request.json()
-    const updated = db.update('blog', id, updates)
+    const updated = await db.update('blog', id, updates)
     
     if (!updated) {
       return NextResponse.json({ error: 'Blog post not found' }, { status: 404 })
@@ -68,6 +68,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -80,7 +81,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
 
-    const deleted = db.delete('blog', id)
+    const deleted = await db.delete('blog', id)
     if (!deleted) {
       return NextResponse.json({ error: 'Blog post not found' }, { status: 404 })
     }
@@ -93,4 +94,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-

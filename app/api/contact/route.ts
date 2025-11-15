@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ContactFormData } from '@/types'
-import { db } from '@/lib/db'
+import { db, initializeDB } from '@/lib/db'
+
+let initialized = false
+const initPromise = initializeDB()
 
 /**
  * Contact Form API Route
@@ -11,6 +14,7 @@ import { db } from '@/lib/db'
  */
 export async function POST(request: NextRequest) {
   try {
+    await initPromise
     const body: ContactFormData = await request.json()
     const { name, email, subject, message } = body
 
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     }
 
-    db.create('messages', messageData)
+    await db.create('messages', messageData)
 
     // Here you can also:
     // 1. Send an email notification using a service like SendGrid, Resend, or Nodemailer
@@ -67,4 +71,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, initializeDB } from '@/lib/db'
 
 let initialized = false
-if (!initialized) {
-  initializeDB()
-  initialized = true
-}
+const initPromise = initializeDB()
 
 export async function GET() {
   try {
-    const experiences = db.read('experience')
+    await initPromise
+    const experiences = await db.read('experience')
     return NextResponse.json({ experiences })
   } catch (error) {
     return NextResponse.json(
@@ -21,6 +19,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
       id: experience.id || `exp-${Date.now()}`,
     }
     
-    const created = db.create('experience', newExperience)
+    const created = await db.create('experience', newExperience)
     return NextResponse.json({ experience: created }, { status: 201 })
   } catch (error) {
     return NextResponse.json(
@@ -44,13 +43,14 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id, ...updates } = await request.json()
-    const updated = db.update('experience', id, updates)
+    const updated = await db.update('experience', id, updates)
     
     if (!updated) {
       return NextResponse.json({ error: 'Experience not found' }, { status: 404 })
@@ -67,6 +67,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    await initPromise
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -79,7 +80,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
 
-    const deleted = db.delete('experience', id)
+    const deleted = await db.delete('experience', id)
     if (!deleted) {
       return NextResponse.json({ error: 'Experience not found' }, { status: 404 })
     }
@@ -92,4 +93,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-
