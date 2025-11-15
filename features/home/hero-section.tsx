@@ -20,7 +20,7 @@ export function HeroSection() {
   })
   const [loading, setLoading] = useState(true)
   
-  useEffect(() => {
+  const fetchConfig = React.useCallback(() => {
     // Fetch dynamic config
     fetch('/api/portfolio/config')
       .then(res => res.json())
@@ -40,6 +40,31 @@ export function HeroSection() {
         setLoading(false)
       })
   }, [])
+
+  useEffect(() => {
+    fetchConfig()
+  }, [fetchConfig])
+
+  // Refresh when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchConfig()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchConfig()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchConfig])
 
   const scrollToContact = () => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })

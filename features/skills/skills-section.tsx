@@ -15,7 +15,7 @@ export function SkillsSection() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchSkills = React.useCallback(() => {
     fetch('/api/portfolio/skills')
       .then(res => res.json())
       .then(data => {
@@ -24,6 +24,31 @@ export function SkillsSection() {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchSkills()
+  }, [fetchSkills])
+
+  // Refresh when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSkills()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchSkills()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchSkills])
 
   if (loading) {
     return (

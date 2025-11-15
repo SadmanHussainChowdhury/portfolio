@@ -18,7 +18,7 @@ export function Footer() {
     links: SITE_CONFIG.links,
   })
 
-  useEffect(() => {
+  const fetchConfig = React.useCallback(() => {
     // Fetch dynamic config
     fetch('/api/portfolio/config')
       .then(res => res.json())
@@ -40,6 +40,31 @@ export function Footer() {
         // Fallback to default if API fails
       })
   }, [])
+
+  useEffect(() => {
+    fetchConfig()
+  }, [fetchConfig])
+
+  // Refresh when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchConfig()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchConfig()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchConfig])
 
   return (
     <footer className="border-t border-border/50 bg-background/80 premium-blur relative overflow-hidden">

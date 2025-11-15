@@ -95,7 +95,7 @@ export function ProjectsSection() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchProjects = React.useCallback(() => {
     fetch('/api/portfolio/projects')
       .then(res => res.json())
       .then(data => {
@@ -104,6 +104,39 @@ export function ProjectsSection() {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
+
+  // Refresh when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProjects()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchProjects()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    // Periodic refresh every 30 seconds when page is visible (fallback)
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchProjects()
+      }
+    }, 30000) // 30 seconds
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+      clearInterval(interval)
+    }
+  }, [fetchProjects])
 
   if (loading) {
     return (

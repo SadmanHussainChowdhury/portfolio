@@ -17,7 +17,7 @@ export function BlogSection() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchBlogPosts = React.useCallback(() => {
     fetch('/api/portfolio/blog')
       .then(res => res.json())
       .then(data => {
@@ -26,6 +26,31 @@ export function BlogSection() {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchBlogPosts()
+  }, [fetchBlogPosts])
+
+  // Refresh when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchBlogPosts()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchBlogPosts()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchBlogPosts])
 
   if (loading) {
     return (

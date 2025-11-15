@@ -14,7 +14,7 @@ export function ServicesSection() {
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchServices = React.useCallback(() => {
     fetch('/api/portfolio/services')
       .then(res => res.json())
       .then(data => {
@@ -23,6 +23,31 @@ export function ServicesSection() {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchServices()
+  }, [fetchServices])
+
+  // Refresh when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchServices()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchServices()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchServices])
 
   if (loading) {
     return (

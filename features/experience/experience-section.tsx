@@ -15,7 +15,7 @@ export function ExperienceSection() {
   const [experiences, setExperiences] = useState<Experience[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchExperiences = React.useCallback(() => {
     fetch('/api/portfolio/experience')
       .then(res => res.json())
       .then(data => {
@@ -24,6 +24,31 @@ export function ExperienceSection() {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchExperiences()
+  }, [fetchExperiences])
+
+  // Refresh when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchExperiences()
+      }
+    }
+
+    const handleFocus = () => {
+      fetchExperiences()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchExperiences])
 
   if (loading) {
     return (
