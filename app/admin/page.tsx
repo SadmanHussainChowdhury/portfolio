@@ -462,7 +462,6 @@ function ConfigManager() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
-  const fileInputRef = useState<HTMLInputElement | null>(null)[0]
 
   useEffect(() => {
     fetch('/api/portfolio/config')
