@@ -62,11 +62,11 @@ export function Navbar() {
                 (item.href.startsWith('#') && pathname === '/')
               return (
                 <motion.div
+                  key={item.name}
                   whileHover={{ y: -2 }}
                   whileTap={{ y: 0 }}
                 >
                   <Link
-                    key={item.name}
                     href={item.href}
                     className={cn(
                       "text-sm font-semibold transition-all duration-300 relative group",
