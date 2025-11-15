@@ -13,7 +13,8 @@ if (!MONGODB_URI) {
 }
 
 async function cleanupDuplicates() {
-  const client = new MongoClient(MONGODB_URI)
+  // MONGODB_URI is guaranteed to be string here due to check above
+  const client = new MongoClient(MONGODB_URI as string)
   
   try {
     await client.connect()
