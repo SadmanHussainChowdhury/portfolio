@@ -15,7 +15,8 @@ import {
   Edit,
   Trash2,
   Save,
-  X
+  X,
+  Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -459,6 +460,9 @@ function ConfigManager() {
   const [config, setConfig] = useState<any>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
+  const fileInputRef = useState<HTMLInputElement | null>(null)[0]
 
   useEffect(() => {
     fetch('/api/portfolio/config')
@@ -470,6 +474,46 @@ function ConfigManager() {
       .catch(() => setLoading(false))
   }, [])
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadProgress('Uploading...')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setConfig({ ...config, resumeUrl: data.url })
+        setUploadProgress(`✓ Uploaded successfully: ${data.fileName}`)
+        
+        // Auto-save the config with new resume URL
+        setTimeout(() => {
+          handleSave()
+        }, 500)
+      } else {
+        setUploadProgress(`✗ Error: ${data.error}`)
+      }
+    } catch (error) {
+      setUploadProgress('✗ Failed to upload file')
+    } finally {
+      setUploading(false)
+      // Reset file input
+      if (e.target) {
+        e.target.value = ''
+      }
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
@@ -479,6 +523,7 @@ function ConfigManager() {
         body: JSON.stringify(config),
       })
       alert('Configuration saved successfully!')
+      setUploadProgress('')
     } catch (error) {
       alert('Failed to save configuration')
     } finally {
@@ -500,14 +545,73 @@ function ConfigManager() {
       <GlassCard className="p-6 glow">
         <div className="space-y-6">
           <div>
-            <Label>Resume URL</Label>
+            <Label>Resume Upload</Label>
+            <div className="mt-2 space-y-3">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="hidden"
+                  id="resume-upload"
+                />
+                <label
+                  htmlFor="resume-upload"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-primary/50 cursor-pointer transition-all ${
+                    uploading
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:border-primary hover:bg-primary/5'
+                  }`}
+                >
+                  <Download className="h-5 w-5" />
+                  <span className="font-medium">
+                    {uploading ? 'Uploading...' : 'Choose Resume File'}
+                  </span>
+                </label>
+                {config.resumeUrl && (
+                  <a
+                    href={config.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    <FileText className="h-4 w-4" />
+                    View Current Resume
+                  </a>
+                )}
+              </div>
+              {uploadProgress && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`text-sm ${
+                    uploadProgress.startsWith('✓')
+                      ? 'text-green-500'
+                      : uploadProgress.startsWith('✗')
+                      ? 'text-destructive'
+                      : 'text-muted-foreground'
+                  }`}
+                >
+                  {uploadProgress}
+                </motion.p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Supported formats: PDF, DOC, DOCX (Max 10MB)
+              </p>
+            </div>
+          </div>
+
+          <div className="border-t border-border/50 pt-4">
+            <Label>Or Enter Resume URL Manually</Label>
             <Input
               value={config.resumeUrl || ''}
               onChange={(e) => setConfig({ ...config, resumeUrl: e.target.value })}
               placeholder="/resume.pdf or https://example.com/resume.pdf"
+              className="mt-2"
             />
             <p className="text-sm text-muted-foreground mt-2">
-              Enter the path to your resume file. Can be a local path (e.g., /resume.pdf) or external URL
+              Enter a direct URL to your resume file (optional if uploading)
             </p>
           </div>
 
