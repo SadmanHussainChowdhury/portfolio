@@ -16,7 +16,8 @@ import {
   Trash2,
   Save,
   X,
-  Download
+  Download,
+  Mail
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { GlassCard } from '@/components/glass-card'
 import { Project, Experience, Skill, Service, BlogPost } from '@/types'
 
-type Tab = 'dashboard' | 'projects' | 'experience' | 'skills' | 'services' | 'blog' | 'config'
+type Tab = 'dashboard' | 'projects' | 'experience' | 'skills' | 'services' | 'blog' | 'messages' | 'config'
 
 export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -40,6 +41,7 @@ export default function AdminPanel() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
+  const [messages, setMessages] = useState<any[]>([])
 
   useEffect(() => {
     checkAuth()
@@ -69,20 +71,22 @@ export default function AdminPanel() {
 
   const loadData = async () => {
     try {
-      const [projectsRes, expRes, skillsRes, servicesRes, blogRes] = await Promise.all([
+      const [projectsRes, expRes, skillsRes, servicesRes, blogRes, messagesRes] = await Promise.all([
         fetch('/api/portfolio/projects'),
         fetch('/api/portfolio/experience'),
         fetch('/api/portfolio/skills'),
         fetch('/api/portfolio/services'),
         fetch('/api/portfolio/blog'),
+        fetch('/api/portfolio/messages'),
       ])
 
-      const [projectsData, expData, skillsData, servicesData, blogData] = await Promise.all([
+      const [projectsData, expData, skillsData, servicesData, blogData, messagesData] = await Promise.all([
         projectsRes.json(),
         expRes.json(),
         skillsRes.json(),
         servicesRes.json(),
         blogRes.json(),
+        messagesRes.json(),
       ])
 
       setProjects(projectsData.projects || [])
@@ -90,6 +94,7 @@ export default function AdminPanel() {
       setSkills(skillsData.skills || [])
       setServices(servicesData.services || [])
       setBlogPosts(blogData.blogPosts || [])
+      setMessages(messagesData.messages || [])
     } catch (error) {
       console.error('Failed to load data:', error)
     }
@@ -147,6 +152,7 @@ export default function AdminPanel() {
                   { id: 'skills', label: 'Skills', icon: Code },
                   { id: 'services', label: 'Services', icon: FileText },
                   { id: 'blog', label: 'Blog', icon: FileText },
+                  { id: 'messages', label: 'Messages', icon: Mail },
                   { id: 'config', label: 'Settings', icon: Settings },
                 ].map((tab) => {
                   const Icon = tab.icon
@@ -178,6 +184,7 @@ export default function AdminPanel() {
                 skills={skills}
                 services={services}
                 blogPosts={blogPosts}
+                messages={messages}
               />
             )}
             {activeTab === 'projects' && (
@@ -220,6 +227,12 @@ export default function AdminPanel() {
                 setEditingItem={setEditingItem}
               />
             )}
+            {activeTab === 'messages' && (
+              <MessagesManager 
+                messages={messages}
+                onUpdate={loadData}
+              />
+            )}
             {activeTab === 'config' && <ConfigManager />}
           </main>
         </div>
@@ -229,13 +242,15 @@ export default function AdminPanel() {
 }
 
 // Dashboard View Component
-function DashboardView({ projects, experiences, skills, services, blogPosts }: any) {
+function DashboardView({ projects, experiences, skills, services, blogPosts, messages }: any) {
+  const unreadCount = messages?.filter((m: any) => !m.read).length || 0
   const stats = [
     { label: 'Projects', value: projects.length, icon: Briefcase, color: 'from-primary to-accent' },
     { label: 'Experience', value: experiences.length, icon: Award, color: 'from-accent to-primary' },
     { label: 'Skills', value: skills.length, icon: Code, color: 'from-primary to-purple-500' },
     { label: 'Services', value: services.length, icon: FileText, color: 'from-purple-500 to-accent' },
     { label: 'Blog Posts', value: blogPosts.length, icon: FileText, color: 'from-accent to-primary' },
+    { label: 'Messages', value: messages.length, icon: Mail, color: 'from-primary to-accent', badge: unreadCount > 0 ? unreadCount : undefined },
   ]
 
   return (

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ContactFormData } from '@/types'
+import { db } from '@/lib/db'
 
 /**
  * Contact Form API Route
- * Handles contact form submissions
+ * Handles contact form submissions and saves to database
  * 
  * POST /api/contact
  * Body: { name, email, subject, message }
@@ -30,22 +31,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Here you would typically:
-    // 1. Send an email using a service like SendGrid, Resend, or Nodemailer
-    // 2. Save to a database
-    // 3. Send a notification
-    
-    // Example: Log the contact form data (replace with actual email service)
-    console.log('Contact Form Submission:', {
-      name,
-      email,
-      subject,
-      message,
-      timestamp: new Date().toISOString(),
-    })
+    // Save message to database
+    const messageData = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject.trim(),
+      message: message.trim(),
+      read: false,
+      createdAt: new Date().toISOString(),
+    }
 
-    // TODO: Integrate with your email service
-    // Example with a hypothetical email service:
+    db.create('messages', messageData)
+
+    // Here you can also:
+    // 1. Send an email notification using a service like SendGrid, Resend, or Nodemailer
+    // 2. Send a notification to your admin panel
+    // Example:
     // await sendEmail({
     //   to: 'your-email@example.com',
     //   from: email,
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
     // })
 
     return NextResponse.json(
-      { message: 'Contact form submitted successfully' },
+      { message: 'Contact form submitted successfully', id: messageData.id },
       { status: 200 }
     )
   } catch (error) {
