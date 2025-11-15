@@ -275,6 +275,11 @@ function DashboardView({ projects, experiences, skills, services, blogPosts, mes
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
                     <p className="text-3xl font-bold">{stat.value}</p>
+                    {stat.badge && (
+                      <span className="inline-block mt-2 px-2 py-1 bg-primary text-primary-foreground text-xs rounded-full">
+                        {stat.badge} unread
+                      </span>
+                    )}
                   </div>
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
                     <Icon className="h-6 w-6 text-white" />
@@ -1161,6 +1166,190 @@ function BlogManager({ blogPosts, onUpdate, editingItem, setEditingItem }: any) 
             </div>
           </GlassCard>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// Messages Manager Component
+function MessagesManager({ messages, onUpdate }: any) {
+  const [selectedMessage, setSelectedMessage] = useState<any>(null)
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await fetch('/api/portfolio/messages', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, read: true }),
+      })
+      onUpdate()
+      if (selectedMessage?.id === id) {
+        setSelectedMessage({ ...selectedMessage, read: true })
+      }
+    } catch (error) {
+      console.error('Failed to mark as read:', error)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this message?')) return
+
+    try {
+      await fetch('/api/portfolio/messages', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      onUpdate()
+      if (selectedMessage?.id === id) {
+        setSelectedMessage(null)
+      }
+    } catch (error) {
+      console.error('Failed to delete message:', error)
+    }
+  }
+
+  const unreadCount = messages.filter((m: any) => !m.read).length
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold mb-2 gradient-text">Messages</h2>
+          <p className="text-muted-foreground">
+            {unreadCount > 0 ? `${unreadCount} unread message${unreadCount > 1 ? 's' : ''}` : 'All messages read'}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Messages List */}
+        <div className="space-y-4">
+          {messages.length === 0 ? (
+            <GlassCard className="p-8 text-center">
+              <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No messages yet</p>
+            </GlassCard>
+          ) : (
+            messages.map((message: any) => (
+              <GlassCard
+                key={message.id}
+                className={`p-4 cursor-pointer transition-all ${
+                  selectedMessage?.id === message.id
+                    ? 'ring-2 ring-primary'
+                    : 'hover:ring-2 hover:ring-primary/50'
+                } ${!message.read ? 'bg-primary/5 border-l-4 border-l-primary' : ''}`}
+                onClick={() => setSelectedMessage(message)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold">{message.name}</h3>
+                      {!message.read && (
+                        <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                          New
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">{message.subject}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(message.createdAt).toLocaleDateString()} at{' '}
+                      {new Date(message.createdAt).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    {!message.read && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleMarkAsRead(message.id)
+                        }}
+                      >
+                        Mark Read
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(message.id)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </GlassCard>
+            ))
+          )}
+        </div>
+
+        {/* Message Detail */}
+        {selectedMessage && (
+          <GlassCard className="p-6 glow">
+            <div className="space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">{selectedMessage.subject}</h3>
+                  <p className="text-muted-foreground">
+                    From: <a href={`mailto:${selectedMessage.email}`} className="text-primary hover:underline">
+                      {selectedMessage.name} ({selectedMessage.email})
+                    </a>
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {new Date(selectedMessage.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                {!selectedMessage.read && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleMarkAsRead(selectedMessage.id)}
+                  >
+                    Mark as Read
+                  </Button>
+                )}
+              </div>
+
+              <div className="border-t border-border/50 pt-4">
+                <h4 className="font-semibold mb-2">Message:</h4>
+                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  {selectedMessage.message}
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-border/50">
+                <Button
+                  variant="outline"
+                  asChild
+                  className="flex-1"
+                >
+                  <a href={`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Reply
+                  </a>
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(selectedMessage.id)}
+                  className="flex-1"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </GlassCard>
+        )}
+
+        {!selectedMessage && messages.length > 0 && (
+          <GlassCard className="p-8 flex items-center justify-center">
+            <p className="text-muted-foreground">Select a message to view details</p>
+          </GlassCard>
+        )}
       </div>
     </div>
   )
