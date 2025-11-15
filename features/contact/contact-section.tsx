@@ -24,11 +24,13 @@ export function ContactSection() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus('idle')
+    setErrorMessage('')
 
     try {
       const response = await fetch('/api/contact', {
@@ -39,14 +41,21 @@ export function ContactSection() {
         body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         setSubmitStatus('success')
         setFormData({ name: '', email: '', subject: '', message: '' })
       } else {
         setSubmitStatus('error')
+        setErrorMessage(data.error || data.details || 'Failed to send message. Please try again.')
+        console.error('Contact form error:', data)
       }
     } catch (error) {
       setSubmitStatus('error')
+      const errorMsg = error instanceof Error ? error.message : 'Network error. Please check your connection.'
+      setErrorMessage(errorMsg)
+      console.error('Contact form submission error:', error)
     } finally {
       setIsSubmitting(false)
     }
@@ -141,7 +150,12 @@ export function ContactSection() {
                     <p className="text-green-500 text-sm">Message sent successfully!</p>
                   )}
                   {submitStatus === 'error' && (
-                    <p className="text-red-500 text-sm">Failed to send message. Please try again.</p>
+                    <div className="text-red-500 text-sm">
+                      <p>{errorMessage || 'Failed to send message. Please try again.'}</p>
+                      {process.env.NODE_ENV === 'development' && (
+                        <p className="text-xs mt-1 opacity-75">Check console for details</p>
+                      )}
+                    </div>
                   )}
                   <Button type="submit" disabled={isSubmitting} className="w-full">
                     {isSubmitting ? (

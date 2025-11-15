@@ -20,11 +20,34 @@ type DbInterface = {
 }
 
 let dbMongo: DbInterface | null = null
-if (isServerless && process.env.MONGODB_URI) {
-  try {
-    dbMongo = require('./db-mongodb').dbMongo as DbInterface
-  } catch (error) {
-    console.warn('MongoDB not available, falling back to file system')
+let mongoLoadError: Error | null = null
+
+// Try to load MongoDB in serverless environments
+if (isServerless) {
+  if (process.env.MONGODB_URI) {
+    try {
+      dbMongo = require('./db-mongodb').dbMongo as DbInterface
+      console.log('✅ MongoDB module loaded successfully')
+      console.log('📍 Environment:', process.env.VERCEL ? 'Vercel' : 'Production')
+      console.log('🔗 MONGODB_URI:', process.env.MONGODB_URI ? 'Set ✓' : 'Not set ✗')
+    } catch (error) {
+      mongoLoadError = error instanceof Error ? error : new Error(String(error))
+      console.error('❌ Failed to load MongoDB module:', mongoLoadError.message)
+      console.error('📦 Stack:', mongoLoadError.stack)
+      console.warn('⚠️ MongoDB not available, but this is required in serverless environment')
+    }
+  } else {
+    console.error('❌ MONGODB_URI not set in serverless environment!')
+    console.error('📍 Current environment:', {
+      VERCEL: process.env.VERCEL,
+      NODE_ENV: process.env.NODE_ENV,
+      hasMongoUri: !!process.env.MONGODB_URI
+    })
+    console.error('📝 To fix:')
+    console.error('   1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables')
+    console.error('   2. Add MONGODB_URI with your MongoDB connection string')
+    console.error('   3. Make sure to select "Production" environment')
+    console.error('   4. Redeploy your application')
   }
 }
 
@@ -82,7 +105,21 @@ export const db = {
   // Read data
   async read<T>(collection: string): Promise<T[]> {
     if (dbMongo) {
-      return await dbMongo.read<T>(collection)
+      try {
+        return await dbMongo.read<T>(collection)
+      } catch (error) {
+        console.error(`Error reading ${collection} from MongoDB:`, error)
+        // In serverless, if MongoDB fails, we can't fall back to file system
+        if (isServerless) {
+          throw new Error(`Database read failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+        // In development, fall back to file system
+        return dbFile.read<T>(collection)
+      }
+    }
+    // File system fallback (development only)
+    if (isServerless) {
+      throw new Error('Database not configured. MONGODB_URI is required in serverless environment.')
     }
     return dbFile.read<T>(collection)
   },
@@ -108,7 +145,22 @@ export const db = {
   // Create new item
   async create<T extends { id: string }>(collection: string, item: T): Promise<T> {
     if (dbMongo) {
-      return await dbMongo.create<T>(collection, item)
+      try {
+        return await dbMongo.create<T>(collection, item)
+      } catch (error) {
+        console.error(`Error creating ${collection} in MongoDB:`, error)
+        if (isServerless) {
+          throw new Error(`Database create failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+        // Fall back to file system in development
+        const items = dbFile.read<T>(collection)
+        items.push(item)
+        dbFile.write(collection, items)
+        return item
+      }
+    }
+    if (isServerless) {
+      throw new Error('Database not configured. MONGODB_URI is required in serverless environment.')
     }
     const items = dbFile.read<T>(collection)
     items.push(item)

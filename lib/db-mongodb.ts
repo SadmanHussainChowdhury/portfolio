@@ -19,7 +19,13 @@ const getMongoUri = () => {
 }
 
 const uri = getMongoUri()
-const options = {}
+// Optimize for serverless: reduce connection timeout and enable retry
+const options = {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+}
 
 let client: MongoClient | null = null
 let clientPromise: Promise<MongoClient> | null = null
@@ -38,18 +44,43 @@ if (uri) {
     }
     clientPromise = globalWithMongo._mongoClientPromise
   } else {
-    // In production mode, it's best to not use a global variable.
-    client = new MongoClient(uri, options)
-    clientPromise = client.connect()
+    // In production/serverless mode, use a global variable to reuse connections
+    // This is important for Vercel serverless functions
+    let globalWithMongo = global as typeof globalThis & {
+      _mongoClientPromise?: Promise<MongoClient>
+    }
+
+    if (!globalWithMongo._mongoClientPromise) {
+      client = new MongoClient(uri, options)
+      globalWithMongo._mongoClientPromise = client.connect()
+      console.log('🔌 MongoDB client created for serverless environment')
+    }
+    clientPromise = globalWithMongo._mongoClientPromise
+  }
+} else {
+  if (process.env.VERCEL === '1') {
+    console.error('❌ MONGODB_URI is not set in Vercel environment!')
+    console.error('📝 Please add MONGODB_URI to Vercel environment variables:')
+    console.error('   1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables')
+    console.error('   2. Add MONGODB_URI with your MongoDB connection string')
+    console.error('   3. Redeploy your application')
   }
 }
 
 async function getDb(): Promise<Db> {
   if (!clientPromise) {
-    throw new Error('MongoDB not configured. Please set MONGODB_URI environment variable.')
+    const errorMsg = process.env.VERCEL === '1' 
+      ? 'MongoDB not configured in Vercel. Please set MONGODB_URI environment variable in Vercel dashboard.'
+      : 'MongoDB not configured. Please set MONGODB_URI environment variable.'
+    throw new Error(errorMsg)
   }
-  const client = await clientPromise
-  return client.db('portfolio')
+  try {
+    const client = await clientPromise
+    return client.db('portfolio')
+  } catch (error) {
+    console.error('MongoDB connection error:', error)
+    throw new Error(`Failed to connect to MongoDB: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }
 
 async function getCollection<T extends Document>(name: string): Promise<Collection<T>> {

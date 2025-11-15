@@ -3,7 +3,15 @@ import { ContactFormData } from '@/types'
 import { db, initializeDB } from '@/lib/db'
 
 let initialized = false
-const initPromise = initializeDB()
+let initPromise: Promise<void> | null = null
+
+// Initialize DB lazily to avoid blocking
+const ensureInitialized = async () => {
+  if (!initPromise) {
+    initPromise = initializeDB()
+  }
+  return initPromise
+}
 
 /**
  * Contact Form API Route
@@ -14,7 +22,7 @@ const initPromise = initializeDB()
  */
 export async function POST(request: NextRequest) {
   try {
-    await initPromise
+    await ensureInitialized()
     const body: ContactFormData = await request.json()
     const { name, email, subject, message } = body
 
@@ -65,8 +73,12 @@ export async function POST(request: NextRequest) {
     )
   } catch (error) {
     console.error('Contact form error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to process contact form' },
+      { 
+        error: 'Failed to process contact form',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     )
   }

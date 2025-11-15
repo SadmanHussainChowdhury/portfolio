@@ -84,7 +84,11 @@ The portfolio automatically uses MongoDB in production (Vercel). Your data will 
 ### Database Connection Issues
 
 - Verify `MONGODB_URI` is correct
-- Check MongoDB Atlas IP whitelist (allow all IPs: `0.0.0.0/0`)
+- **Check MongoDB Atlas Network Access**:
+  1. Go to MongoDB Atlas → Network Access
+  2. Add IP Address: `0.0.0.0/0` (allows all IPs - required for Vercel)
+  3. Wait 1-2 minutes for changes to propagate
+  4. See `MONGODB_NETWORK_ACCESS.md` for detailed instructions
 - Ensure MongoDB user has read/write permissions
 
 ### API Routes Not Working
