@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ContactFormData } from '@/types'
 import { db, initializeDB } from '@/lib/db'
 
-let initialized = false
+// Initialize DB on first request - use singleton pattern
 let initPromise: Promise<void> | null = null
-
-// Initialize DB lazily to avoid blocking
-const ensureInitialized = async () => {
+const getInitPromise = () => {
   if (!initPromise) {
     initPromise = initializeDB()
   }
@@ -22,7 +20,7 @@ const ensureInitialized = async () => {
  */
 export async function POST(request: NextRequest) {
   try {
-    await ensureInitialized()
+    await getInitPromise()
     const body: ContactFormData = await request.json()
     const { name, email, subject, message } = body
 

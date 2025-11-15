@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db, initializeDB } from '@/lib/db'
 
-let initialized = false
-const initPromise = initializeDB()
+// Initialize DB on first request - use singleton pattern
+let initPromise: Promise<void> | null = null
+const getInitPromise = () => {
+  if (!initPromise) {
+    initPromise = initializeDB()
+  }
+  return initPromise
+}
 
 export async function GET() {
   try {
-    await initPromise
+    await getInitPromise()
     const blogPosts = await db.read('blog')
     return NextResponse.json({ blogPosts })
   } catch (error) {
@@ -19,7 +25,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await initPromise
+    await getInitPromise()
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    await initPromise
+    await getInitPromise()
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -68,7 +74,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    await initPromise
+    await getInitPromise()
     const isAuthenticated = request.cookies.get('admin-authenticated')?.value === 'true'
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

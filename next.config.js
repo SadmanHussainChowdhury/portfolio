@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Disable to prevent double renders in production
   swcMinify: true,
   images: {
     // Use remotePatterns instead of deprecated domains

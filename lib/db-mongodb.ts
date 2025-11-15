@@ -88,15 +88,42 @@ async function getCollection<T extends Document>(name: string): Promise<Collecti
   return db.collection<T>(name)
 }
 
+// Helper function to remove duplicates based on id
+function removeDuplicates<T extends { id?: string }>(items: T[]): T[] {
+  const seen = new Set<string>()
+  return items.filter((item) => {
+    const id = item.id
+    if (!id) return true // Keep items without id
+    if (seen.has(id)) {
+      return false // Duplicate
+    }
+    seen.add(id)
+    return true
+  })
+}
+
 export const dbMongo = {
   // Read data from MongoDB
   async read<T extends Document>(collection: string): Promise<T[]> {
     try {
       const coll = await getCollection<T>(collection)
-      return await coll.find({}).toArray() as T[]
+      const result = await coll.find({}).toArray() as T[]
+      
+      // Remove duplicates based on id field
+      const uniqueResult = removeDuplicates(result)
+      
+      if (result.length !== uniqueResult.length) {
+        console.warn(`⚠️ Found ${result.length - uniqueResult.length} duplicate(s) in ${collection}, removed`)
+      }
+      
+      console.log(`✅ Read ${uniqueResult.length} unique items from ${collection} collection`)
+      return uniqueResult
     } catch (error) {
-      console.error(`Error reading ${collection} from MongoDB:`, error)
-      return []
+      console.error(`❌ Error reading ${collection} from MongoDB:`, error)
+      if (error instanceof Error) {
+        console.error(`   Message: ${error.message}`)
+      }
+      throw error // Re-throw to let caller handle it
     }
   },
 

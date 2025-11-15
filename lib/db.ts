@@ -104,9 +104,11 @@ const dbFile = {
 export const db = {
   // Read data
   async read<T>(collection: string): Promise<T[]> {
+    let result: T[] = []
+    
     if (dbMongo) {
       try {
-        return await dbMongo.read<T>(collection)
+        result = await dbMongo.read<T>(collection)
       } catch (error) {
         console.error(`Error reading ${collection} from MongoDB:`, error)
         // In serverless, if MongoDB fails, we can't fall back to file system
@@ -114,14 +116,30 @@ export const db = {
           throw new Error(`Database read failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
         // In development, fall back to file system
-        return dbFile.read<T>(collection)
+        result = dbFile.read<T>(collection)
       }
+    } else {
+      // File system fallback (development only)
+      if (isServerless) {
+        throw new Error('Database not configured. MONGODB_URI is required in serverless environment.')
+      }
+      result = dbFile.read<T>(collection)
     }
-    // File system fallback (development only)
-    if (isServerless) {
-      throw new Error('Database not configured. MONGODB_URI is required in serverless environment.')
+    
+    // Remove duplicates based on id (safety check)
+    const uniqueResult = result.reduce((acc: T[], current: T) => {
+      const id = (current as any).id
+      if (!id || !acc.find((item: T) => (item as any).id === id)) {
+        acc.push(current)
+      }
+      return acc
+    }, [])
+    
+    if (result.length !== uniqueResult.length) {
+      console.warn(`⚠️ Found ${result.length - uniqueResult.length} duplicate(s) in ${collection}, removed`)
     }
-    return dbFile.read<T>(collection)
+    
+    return uniqueResult
   },
 
   // Write data
@@ -195,56 +213,113 @@ export const db = {
 }
 
 // Initialize with default data if files don't exist
+// Use a flag to prevent multiple initializations
+let isInitializing = false
+let initializationPromise: Promise<void> | null = null
+
 export const initializeDB = async () => {
-  try {
-    // Initialize projects if empty
-    const projects = await db.read('projects')
-    if (projects.length === 0) {
-      const { projects: defaultProjects } = require('@/data/projects')
-      await db.write('projects', defaultProjects)
-    }
-    
-    // Initialize skills if empty
-    const skills = await db.read('skills')
-    if (skills.length === 0) {
-      const { skills: defaultSkills } = require('@/data/skills')
-      const allSkills = defaultSkills.map((skill: any, index: number) => ({
-        ...skill,
-        id: `skill-${index + 1}`,
-      }))
-      await db.write('skills', allSkills)
-    }
-    
-    // Initialize experience if empty
-    const experience = await db.read('experience')
-    if (experience.length === 0) {
-      const { experiences } = require('@/data/experience')
-      await db.write('experience', experiences)
-    }
-    
-    // Initialize services if empty
-    const services = await db.read('services')
-    if (services.length === 0) {
-      const { services: defaultServices } = require('@/data/services')
-      await db.write('services', defaultServices)
-    }
-    
-    // Initialize blog if empty
-    const blog = await db.read('blog')
-    if (blog.length === 0) {
-      const { blogPosts } = require('@/data/blog')
-      await db.write('blog', blogPosts)
-    }
-    
-    // Initialize site config
-    const config = await db.read('config')
-    if (config.length === 0) {
-      const { SITE_CONFIG } = require('@/lib/constants')
-      const configWithId = { ...SITE_CONFIG, id: 'config' }
-      await db.write('config', [configWithId])
-    }
-  } catch (error) {
-    console.error('Error initializing database:', error)
+  // Return existing promise if already initializing
+  if (initializationPromise) {
+    return initializationPromise
   }
+  
+  // Prevent concurrent initializations
+  if (isInitializing) {
+    return new Promise<void>((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (!isInitializing) {
+          clearInterval(checkInterval)
+          resolve()
+        }
+      }, 100)
+    })
+  }
+  
+  isInitializing = true
+  initializationPromise = (async () => {
+    try {
+      console.log('🔄 Starting database initialization...')
+      
+      // Initialize projects if empty
+      const projects = await db.read('projects')
+      if (projects.length === 0) {
+        console.log('📦 Initializing projects...')
+        const { projects: defaultProjects } = require('@/data/projects')
+        await db.write('projects', defaultProjects)
+        console.log(`✅ Initialized ${defaultProjects.length} projects`)
+      } else {
+        console.log(`✅ Projects already initialized (${projects.length} items)`)
+      }
+      
+      // Initialize skills if empty
+      const skills = await db.read('skills')
+      if (skills.length === 0) {
+        console.log('📦 Initializing skills...')
+        const { skills: defaultSkills } = require('@/data/skills')
+        const allSkills = defaultSkills.map((skill: any, index: number) => ({
+          ...skill,
+          id: skill.id || `skill-${index + 1}`,
+        }))
+        await db.write('skills', allSkills)
+        console.log(`✅ Initialized ${allSkills.length} skills`)
+      } else {
+        console.log(`✅ Skills already initialized (${skills.length} items)`)
+      }
+      
+      // Initialize experience if empty
+      const experience = await db.read('experience')
+      if (experience.length === 0) {
+        console.log('📦 Initializing experience...')
+        const { experiences } = require('@/data/experience')
+        await db.write('experience', experiences)
+        console.log(`✅ Initialized ${experiences.length} experiences`)
+      } else {
+        console.log(`✅ Experience already initialized (${experience.length} items)`)
+      }
+      
+      // Initialize services if empty
+      const services = await db.read('services')
+      if (services.length === 0) {
+        console.log('📦 Initializing services...')
+        const { services: defaultServices } = require('@/data/services')
+        await db.write('services', defaultServices)
+        console.log(`✅ Initialized ${defaultServices.length} services`)
+      } else {
+        console.log(`✅ Services already initialized (${services.length} items)`)
+      }
+      
+      // Initialize blog if empty
+      const blog = await db.read('blog')
+      if (blog.length === 0) {
+        console.log('📦 Initializing blog...')
+        const { blogPosts } = require('@/data/blog')
+        await db.write('blog', blogPosts)
+        console.log(`✅ Initialized ${blogPosts.length} blog posts`)
+      } else {
+        console.log(`✅ Blog already initialized (${blog.length} items)`)
+      }
+      
+      // Initialize site config
+      const config = await db.read('config')
+      if (config.length === 0) {
+        console.log('📦 Initializing config...')
+        const { SITE_CONFIG } = require('@/lib/constants')
+        const configWithId = { ...SITE_CONFIG, id: 'config' }
+        await db.write('config', [configWithId])
+        console.log('✅ Initialized config')
+      } else {
+        console.log('✅ Config already initialized')
+      }
+      
+      console.log('✅ Database initialization complete')
+    } catch (error) {
+      console.error('❌ Error initializing database:', error)
+      throw error
+    } finally {
+      isInitializing = false
+    }
+  })()
+  
+  return initializationPromise
 }
 
