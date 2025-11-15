@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Calendar, MapPin } from "lucide-react"
+import { Calendar, MapPin, Briefcase } from "lucide-react"
 import { GlassCard } from "@/components/glass-card"
 import { Experience } from "@/types"
 
@@ -85,31 +85,35 @@ export function ExperienceSection() {
                     </div>
                   </div>
                   
-                  <ul className="space-y-2 mt-4">
-                    {exp.description.map((item, idx) => (
-                      <li key={idx} className="flex items-start text-muted-foreground">
-                        <span className="mr-2 text-primary">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <div className="flex items-center mb-2">
-                      <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm font-medium">Technologies:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {exp.technologies.map((tech) => (
-                        <span
-                          key={tech}
-                          className="px-2 py-1 bg-muted text-xs rounded-md"
-                        >
-                          {tech}
-                        </span>
+                  {(exp.description && exp.description.length > 0) && (
+                    <ul className="space-y-2 mt-4">
+                      {exp.description.map((item, idx) => (
+                        <li key={idx} className="flex items-start text-muted-foreground">
+                          <span className="mr-2 text-primary">•</span>
+                          <span>{item}</span>
+                        </li>
                       ))}
+                    </ul>
+                  )}
+
+                  {exp.technologies && exp.technologies.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <div className="flex items-center mb-2">
+                        <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-sm font-medium">Technologies:</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {exp.technologies.map((tech) => (
+                          <span
+                            key={tech}
+                            className="px-2 py-1 bg-muted text-xs rounded-md"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </GlassCard>
               </motion.div>
             ))}

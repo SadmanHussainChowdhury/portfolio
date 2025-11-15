@@ -444,7 +444,7 @@ function ExperienceManager({ experiences, onUpdate, editingItem, setEditingItem 
   const [formData, setFormData] = useState<Partial<Experience>>({})
 
   const handleCreate = () => {
-    setFormData({})
+    setFormData({ description: [], technologies: [] })
     setEditingItem('new')
   }
 
@@ -457,15 +457,11 @@ function ExperienceManager({ experiences, onUpdate, editingItem, setEditingItem 
     try {
       const url = '/api/portfolio/experience'
       const method = editingItem === 'new' ? 'POST' : 'PUT'
-      const payload = {
-        ...formData,
-        id: editingItem === 'new' ? `exp-${Date.now()}` : formData.id,
-      }
       
       await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       })
 
       setEditingItem(null)
@@ -485,6 +481,24 @@ function ExperienceManager({ experiences, onUpdate, editingItem, setEditingItem 
     } catch (error) {
       console.error('Failed to delete experience:', error)
     }
+  }
+
+  const addDescriptionItem = () => {
+    setFormData({
+      ...formData,
+      description: [...(formData.description || []), ''],
+    })
+  }
+
+  const updateDescriptionItem = (index: number, value: string) => {
+    const newDescription = [...(formData.description || [])]
+    newDescription[index] = value
+    setFormData({ ...formData, description: newDescription })
+  }
+
+  const removeDescriptionItem = (index: number) => {
+    const newDescription = formData.description?.filter((_, i) => i !== index) || []
+    setFormData({ ...formData, description: newDescription })
   }
 
   return (
@@ -546,16 +560,29 @@ function ExperienceManager({ experiences, onUpdate, editingItem, setEditingItem 
               </div>
             </div>
             <div>
-              <Label>Description (one per line)</Label>
-              <Textarea
-                value={formData.description?.join('\n') || ''}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  description: e.target.value.split('\n').filter(d => d.trim()) 
-                })}
-                rows={5}
-                placeholder="Enter each responsibility on a new line"
-              />
+              <Label>Responsibilities</Label>
+              <div className="space-y-2 mt-2">
+                {formData.description?.map((item, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={item}
+                      onChange={(e) => updateDescriptionItem(index, e.target.value)}
+                      placeholder={`Responsibility ${index + 1}`}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeDescriptionItem(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="outline" onClick={addDescriptionItem} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Responsibility
+                </Button>
+              </div>
             </div>
             <div>
               <Label>Technologies (comma separated)</Label>
@@ -563,7 +590,7 @@ function ExperienceManager({ experiences, onUpdate, editingItem, setEditingItem 
                 value={formData.technologies?.join(', ') || ''}
                 onChange={(e) => setFormData({ 
                   ...formData, 
-                  technologies: e.target.value.split(',').map(t => t.trim()).filter(t => t)
+                  technologies: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
                 })}
                 placeholder="PHP, Laravel, MySQL, JavaScript"
               />
@@ -590,31 +617,529 @@ function ExperienceManager({ experiences, onUpdate, editingItem, setEditingItem 
                 <h3 className="text-xl font-bold mb-1">{exp.position}</h3>
                 <p className="text-lg text-primary mb-2">{exp.company}</p>
                 <p className="text-sm text-muted-foreground mb-3">
-                  {exp.startDate} - {exp.endDate || 'Present'}
-                  {exp.location && ` • ${exp.location}`}
+                  {exp.startDate} - {exp.endDate || 'Present'} {exp.location && `• ${exp.location}`}
                 </p>
-                {exp.description && exp.description.length > 0 && (
-                  <ul className="list-disc list-inside text-sm text-muted-foreground mb-3 space-y-1">
-                    {exp.description.map((desc, i) => (
-                      <li key={i}>{desc}</li>
-                    ))}
-                  </ul>
-                )}
-                {exp.technologies && exp.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {exp.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-1 bg-muted rounded text-xs">
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mb-3">
+                  {exp.description?.slice(0, 3).map((desc, i) => (
+                    <li key={i}>{desc}</li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap gap-2">
+                  {exp.technologies?.slice(0, 5).map((tech, i) => (
+                    <span key={i} className="px-2 py-1 bg-muted rounded text-xs">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="flex gap-2 ml-4">
                 <Button variant="outline" size="sm" onClick={() => handleEdit(exp)}>
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleDelete(exp.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Skills Manager Component
+function SkillsManager({ skills, onUpdate, editingItem, setEditingItem }: any) {
+  const [formData, setFormData] = useState<Partial<Skill>>({})
+
+  const handleCreate = () => {
+    setFormData({ level: 'intermediate', category: 'language' })
+    setEditingItem('new')
+  }
+
+  const handleEdit = (skill: Skill) => {
+    setFormData(skill)
+    setEditingItem(skill.id)
+  }
+
+  const handleSave = async () => {
+    try {
+      const url = '/api/portfolio/skills'
+      const method = editingItem === 'new' ? 'POST' : 'PUT'
+      
+      await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      setEditingItem(null)
+      setFormData({})
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to save skill:', error)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this skill?')) return
+
+    try {
+      await fetch(`/api/portfolio/skills?id=${id}`, { method: 'DELETE' })
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to delete skill:', error)
+    }
+  }
+
+  const skillsByCategory = skills.reduce((acc: any, skill: Skill) => {
+    const cat = skill.category || 'other'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(skill)
+    return acc
+  }, {})
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold mb-2 gradient-text">Skills</h2>
+          <p className="text-muted-foreground">Manage your technical skills</p>
+        </div>
+        <Button onClick={handleCreate} className="glow-effect-hover">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Skill
+        </Button>
+      </div>
+
+      {(editingItem === 'new' || editingItem) && (
+        <GlassCard className="p-6 glow">
+          <div className="space-y-4">
+            <div>
+              <Label>Skill Name</Label>
+              <Input
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., React, Python, MySQL"
+              />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Level</Label>
+                <select
+                  value={formData.level || 'intermediate'}
+                  onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
+                  className="flex h-11 w-full rounded-lg border-2 border-input bg-background/50 backdrop-blur-sm px-4 py-2 text-sm"
+                >
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                  <option value="expert">Expert</option>
+                </select>
+              </div>
+              <div>
+                <Label>Category</Label>
+                <select
+                  value={formData.category || 'language'}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                  className="flex h-11 w-full rounded-lg border-2 border-input bg-background/50 backdrop-blur-sm px-4 py-2 text-sm"
+                >
+                  <option value="language">Language</option>
+                  <option value="framework">Framework</option>
+                  <option value="database">Database</option>
+                  <option value="tool">Tool</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={handleSave} className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+              <Button variant="outline" onClick={() => setEditingItem(null)} className="flex-1">
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </GlassCard>
+      )}
+
+      <div className="space-y-6">
+        {Object.entries(skillsByCategory).map(([category, categorySkills]: [string, any]) => (
+          <GlassCard key={category} className="p-6 glow">
+            <h3 className="text-lg font-bold mb-4 capitalize">{category}</h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {categorySkills.map((skill: Skill) => (
+                <div key={skill.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-semibold">{skill.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{skill.level}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(skill)}>
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(skill.id!)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Services Manager Component
+function ServicesManager({ services, onUpdate, editingItem, setEditingItem }: any) {
+  const [formData, setFormData] = useState<Partial<Service>>({})
+
+  const handleCreate = () => {
+    setFormData({ features: [] })
+    setEditingItem('new')
+  }
+
+  const handleEdit = (service: Service) => {
+    setFormData(service)
+    setEditingItem(service.id)
+  }
+
+  const handleSave = async () => {
+    try {
+      const url = '/api/portfolio/services'
+      const method = editingItem === 'new' ? 'POST' : 'PUT'
+      
+      await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      setEditingItem(null)
+      setFormData({})
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to save service:', error)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this service?')) return
+
+    try {
+      await fetch(`/api/portfolio/services?id=${id}`, { method: 'DELETE' })
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to delete service:', error)
+    }
+  }
+
+  const addFeature = () => {
+    setFormData({
+      ...formData,
+      features: [...(formData.features || []), ''],
+    })
+  }
+
+  const updateFeature = (index: number, value: string) => {
+    const newFeatures = [...(formData.features || [])]
+    newFeatures[index] = value
+    setFormData({ ...formData, features: newFeatures })
+  }
+
+  const removeFeature = (index: number) => {
+    const newFeatures = formData.features?.filter((_, i) => i !== index) || []
+    setFormData({ ...formData, features: newFeatures })
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold mb-2 gradient-text">Services</h2>
+          <p className="text-muted-foreground">Manage your service offerings</p>
+        </div>
+        <Button onClick={handleCreate} className="glow-effect-hover">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Service
+        </Button>
+      </div>
+
+      {(editingItem === 'new' || editingItem) && (
+        <GlassCard className="p-6 glow">
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Title</Label>
+                <Input
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Icon (Emoji)</Label>
+                <Input
+                  value={formData.icon || ''}
+                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                  placeholder="🌐"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Features</Label>
+              <div className="space-y-2 mt-2">
+                {formData.features?.map((feature, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={feature}
+                      onChange={(e) => updateFeature(index, e.target.value)}
+                      placeholder={`Feature ${index + 1}`}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeFeature(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="outline" onClick={addFeature} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Feature
+                </Button>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={handleSave} className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+              <Button variant="outline" onClick={() => setEditingItem(null)} className="flex-1">
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </GlassCard>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {services.map((service: Service) => (
+          <GlassCard key={service.id} className="p-6 glow">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">{service.icon}</span>
+                  <h3 className="text-xl font-bold">{service.title}</h3>
+                </div>
+                <p className="text-muted-foreground mb-3">{service.description}</p>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  {service.features?.slice(0, 3).map((feature, i) => (
+                    <li key={i}>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex gap-2 ml-4">
+                <Button variant="outline" size="sm" onClick={() => handleEdit(service)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDelete(service.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Blog Manager Component
+function BlogManager({ blogPosts, onUpdate, editingItem, setEditingItem }: any) {
+  const [formData, setFormData] = useState<Partial<BlogPost>>({})
+
+  const handleCreate = () => {
+    setFormData({ 
+      tags: [],
+      publishedAt: new Date().toISOString().split('T')[0],
+      author: 'Sadman Hussain Chowdhury'
+    })
+    setEditingItem('new')
+  }
+
+  const handleEdit = (post: BlogPost) => {
+    setFormData(post)
+    setEditingItem(post.id)
+  }
+
+  const handleSave = async () => {
+    try {
+      const url = '/api/portfolio/blog'
+      const method = editingItem === 'new' ? 'POST' : 'PUT'
+      
+      await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      setEditingItem(null)
+      setFormData({})
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to save blog post:', error)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this blog post?')) return
+
+    try {
+      await fetch(`/api/portfolio/blog?id=${id}`, { method: 'DELETE' })
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to delete blog post:', error)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold mb-2 gradient-text">Blog Posts</h2>
+          <p className="text-muted-foreground">Manage your blog content</p>
+        </div>
+        <Button onClick={handleCreate} className="glow-effect-hover">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Blog Post
+        </Button>
+      </div>
+
+      {(editingItem === 'new' || editingItem) && (
+        <GlassCard className="p-6 glow">
+          <div className="space-y-4">
+            <div>
+              <Label>Title</Label>
+              <Input
+                value={formData.title || ''}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Excerpt</Label>
+              <Textarea
+                value={formData.excerpt || ''}
+                onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                rows={2}
+              />
+            </div>
+            <div>
+              <Label>Content</Label>
+              <Textarea
+                value={formData.content || ''}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                rows={8}
+              />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Image URL</Label>
+                <Input
+                  value={formData.image || ''}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Published Date</Label>
+                <Input
+                  type="date"
+                  value={formData.publishedAt?.split('T')[0] || ''}
+                  onChange={(e) => setFormData({ ...formData, publishedAt: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Author</Label>
+                <Input
+                  value={formData.author || ''}
+                  onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Read Time (minutes)</Label>
+                <Input
+                  type="number"
+                  value={formData.readTime || ''}
+                  onChange={(e) => setFormData({ ...formData, readTime: parseInt(e.target.value) || undefined })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Tags (comma separated)</Label>
+              <Input
+                value={formData.tags?.join(', ') || ''}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
+                })}
+                placeholder="Next.js, React, Web Development"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={handleSave} className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+              <Button variant="outline" onClick={() => setEditingItem(null)} className="flex-1">
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </GlassCard>
+      )}
+
+      <div className="grid gap-4">
+        {blogPosts.map((post: BlogPost) => (
+          <GlassCard key={post.id} className="p-6 glow">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-xl font-bold mb-2">{post.title}</h3>
+                <p className="text-muted-foreground mb-3">{post.excerpt}</p>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                  <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
+                  {post.readTime && <span>{post.readTime} min read</span>}
+                  <span>By {post.author}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {post.tags?.map((tag, i) => (
+                    <span key={i} className="px-2 py-1 bg-muted rounded text-xs">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 ml-4">
+                <Button variant="outline" size="sm" onClick={() => handleEdit(post)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDelete(post.id)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
