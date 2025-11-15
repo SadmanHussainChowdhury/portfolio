@@ -27,6 +27,7 @@ export interface Experience {
 }
 
 export interface Skill {
+  id?: string
   name: string
   level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
   category: 'language' | 'framework' | 'tool' | 'database' | 'other'

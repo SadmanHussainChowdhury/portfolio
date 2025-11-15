@@ -1,13 +1,13 @@
 'use client'
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
 import { ExternalLink, Github } from "lucide-react"
 import { GlassCard } from "@/components/glass-card"
 import { Button } from "@/components/ui/button"
-import { projects } from "@/data/projects"
 import { Project } from "@/types"
 
 /**
@@ -89,9 +89,32 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
 /**
  * Projects Section Component
- * Showcases portfolio projects
+ * Showcases portfolio projects - Dynamic from API
  */
 export function ProjectsSection() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/portfolio/projects')
+      .then(res => res.json())
+      .then(data => {
+        setProjects(data.projects || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <section id="projects" className="py-20 md:py-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">Loading projects...</div>
+        </div>
+      </section>
+    )
+  }
+
   const featuredProjects = projects.filter(p => p.featured)
   const otherProjects = projects.filter(p => !p.featured)
 
