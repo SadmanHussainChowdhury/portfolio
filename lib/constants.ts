@@ -8,6 +8,7 @@ export const SITE_CONFIG = {
   description: "Passionate software developer specializing in modern web technologies. Building innovative solutions with React, Next.js, Node.js, and more.",
   url: "https://sadman-portfolio.vercel.app",
   ogImage: "/og-image.jpg",
+  resumeUrl: "/resume.pdf", // Default resume URL - can be updated via admin panel
   links: {
     github: "https://github.com/SadmanHussainChowdhury",
     linkedin: "https://linkedin.com/in/sadman-hussain",

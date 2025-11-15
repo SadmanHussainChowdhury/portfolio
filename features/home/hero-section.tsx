@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ArrowDown, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,9 +9,26 @@ import { SITE_CONFIG } from "@/lib/constants"
 
 /**
  * Hero Section Component
- * Main landing section with introduction and CTA
+ * Main landing section with introduction and CTA - Dynamic Resume
  */
 export function HeroSection() {
+  const [resumeUrl, setResumeUrl] = useState(SITE_CONFIG.resumeUrl)
+  
+  useEffect(() => {
+    // Fetch dynamic config for resume URL
+    fetch('/api/portfolio/config')
+      .then(res => res.json())
+      .then(data => {
+        if (data.config?.resumeUrl) {
+          setResumeUrl(data.config.resumeUrl)
+        }
+      })
+      .catch(() => {
+        // Fallback to default if API fails
+        setResumeUrl(SITE_CONFIG.resumeUrl)
+      })
+  }, [])
+
   const scrollToContact = () => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -115,7 +133,7 @@ export function HeroSection() {
                 asChild
                 className="group border-2 hover:border-primary/50 px-8 py-6 text-lg font-semibold backdrop-blur-sm"
               >
-                <a href="/resume.pdf" download>
+                <a href={resumeUrl} download target="_blank" rel="noopener noreferrer">
                   <Download className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
                   Download Resume
                 </a>

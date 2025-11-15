@@ -1,0 +1,47 @@
+[
+  {
+    "id": "1",
+    "title": "Getting Started with Next.js 14",
+    "excerpt": "Learn the fundamentals of Next.js 14 and build modern web applications",
+    "content": "Full article content here...",
+    "author": "Sadman Hussain Chowdhury",
+    "publishedAt": "2024-01-15",
+    "tags": [
+      "Next.js",
+      "React",
+      "Web Development"
+    ],
+    "readTime": 5,
+    "image": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800"
+  },
+  {
+    "id": "2",
+    "title": "Mastering TypeScript for React",
+    "excerpt": "A comprehensive guide to using TypeScript effectively in React projects",
+    "content": "Full article content here...",
+    "author": "Sadman Hussain Chowdhury",
+    "publishedAt": "2024-01-10",
+    "tags": [
+      "TypeScript",
+      "React",
+      "Programming"
+    ],
+    "readTime": 8,
+    "image": "https://images.unsplash.com/photo-1516116216624-53e6977beabf?w=800"
+  },
+  {
+    "id": "3",
+    "title": "Building Scalable Laravel Applications",
+    "excerpt": "Best practices for building maintainable Laravel applications",
+    "content": "Full article content here...",
+    "author": "Sadman Hussain Chowdhury",
+    "publishedAt": "2024-01-05",
+    "tags": [
+      "Laravel",
+      "PHP",
+      "Backend"
+    ],
+    "readTime": 6,
+    "image": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800"
+  }
+]

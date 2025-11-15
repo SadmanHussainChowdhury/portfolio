@@ -1,0 +1,116 @@
+[
+  {
+    "name": "Java",
+    "level": "advanced",
+    "category": "language",
+    "id": "skill-1"
+  },
+  {
+    "name": "Python",
+    "level": "intermediate",
+    "category": "language",
+    "id": "skill-2"
+  },
+  {
+    "name": "JavaScript",
+    "level": "advanced",
+    "category": "language",
+    "id": "skill-3"
+  },
+  {
+    "name": "TypeScript",
+    "level": "intermediate",
+    "category": "language",
+    "id": "skill-4"
+  },
+  {
+    "name": "C++",
+    "level": "intermediate",
+    "category": "language",
+    "id": "skill-5"
+  },
+  {
+    "name": "PHP",
+    "level": "advanced",
+    "category": "language",
+    "id": "skill-6"
+  },
+  {
+    "name": "React",
+    "level": "advanced",
+    "category": "framework",
+    "id": "skill-7"
+  },
+  {
+    "name": "Next.js",
+    "level": "intermediate",
+    "category": "framework",
+    "id": "skill-8"
+  },
+  {
+    "name": "Laravel",
+    "level": "advanced",
+    "category": "framework",
+    "id": "skill-9"
+  },
+  {
+    "name": "Express.js",
+    "level": "intermediate",
+    "category": "framework",
+    "id": "skill-10"
+  },
+  {
+    "name": "MySQL",
+    "level": "advanced",
+    "category": "database",
+    "id": "skill-11"
+  },
+  {
+    "name": "MongoDB",
+    "level": "intermediate",
+    "category": "database",
+    "id": "skill-12"
+  },
+  {
+    "name": "PostgreSQL",
+    "level": "beginner",
+    "category": "database",
+    "id": "skill-13"
+  },
+  {
+    "name": "Git",
+    "level": "advanced",
+    "category": "tool",
+    "id": "skill-14"
+  },
+  {
+    "name": "Docker",
+    "level": "intermediate",
+    "category": "tool",
+    "id": "skill-15"
+  },
+  {
+    "name": "Jenkins",
+    "level": "intermediate",
+    "category": "tool",
+    "id": "skill-16"
+  },
+  {
+    "name": "Jira",
+    "level": "intermediate",
+    "category": "tool",
+    "id": "skill-17"
+  },
+  {
+    "name": "Selenium",
+    "level": "intermediate",
+    "category": "tool",
+    "id": "skill-18"
+  },
+  {
+    "name": "JUnit",
+    "level": "intermediate",
+    "category": "tool",
+    "id": "skill-19"
+  }
+]

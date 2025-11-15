@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1",
+    "title": "Web Development",
+    "description": "Custom web applications built with modern technologies",
+    "icon": "🌐",
+    "features": [
+      "Responsive Design",
+      "Performance Optimization",
+      "SEO Friendly",
+      "Cross-browser Compatibility"
+    ]
+  },
+  {
+    "id": "2",
+    "title": "Full-Stack Solutions",
+    "description": "End-to-end development from frontend to backend",
+    "icon": "💻",
+    "features": [
+      "API Development",
+      "Database Design",
+      "Authentication Systems",
+      "Payment Integration"
+    ]
+  },
+  {
+    "id": "3",
+    "title": "UI/UX Design",
+    "description": "Beautiful and intuitive user interfaces",
+    "icon": "🎨",
+    "features": [
+      "Modern Design",
+      "User Experience",
+      "Prototyping",
+      "Design Systems"
+    ]
+  },
+  {
+    "id": "4",
+    "title": "Consulting",
+    "description": "Technical consulting and code reviews",
+    "icon": "📊",
+    "features": [
+      "Architecture Planning",
+      "Code Review",
+      "Best Practices",
+      "Technical Guidance"
+    ]
+  }
+]

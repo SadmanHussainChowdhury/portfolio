@@ -17,6 +17,7 @@ import {
   Save,
   X
 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -456,6 +457,149 @@ function BlogManager({ blogPosts, onUpdate, editingItem, setEditingItem }: any) 
 }
 
 function ConfigManager() {
-  return <div>Config Manager - Site settings</div>
+  const [config, setConfig] = useState<any>({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/portfolio/config')
+      .then(res => res.json())
+      .then(data => {
+        setConfig(data.config || {})
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await fetch('/api/portfolio/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      })
+      alert('Configuration saved successfully!')
+    } catch (error) {
+      alert('Failed to save configuration')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return <div>Loading configuration...</div>
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold mb-2 gradient-text">Site Configuration</h2>
+        <p className="text-muted-foreground">Manage your portfolio settings</p>
+      </div>
+
+      <GlassCard className="p-6 glow">
+        <div className="space-y-6">
+          <div>
+            <Label>Resume URL</Label>
+            <Input
+              value={config.resumeUrl || ''}
+              onChange={(e) => setConfig({ ...config, resumeUrl: e.target.value })}
+              placeholder="/resume.pdf or https://example.com/resume.pdf"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              Enter the path to your resume file. Can be a local path (e.g., /resume.pdf) or external URL
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label>Name</Label>
+              <Input
+                value={config.name || ''}
+                onChange={(e) => setConfig({ ...config, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Title</Label>
+              <Input
+                value={config.title || ''}
+                onChange={(e) => setConfig({ ...config, title: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Description</Label>
+            <Textarea
+              value={config.description || ''}
+              onChange={(e) => setConfig({ ...config, description: e.target.value })}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <Label>Site URL</Label>
+            <Input
+              value={config.url || ''}
+              onChange={(e) => setConfig({ ...config, url: e.target.value })}
+            />
+          </div>
+
+          <div className="border-t border-border/50 pt-6">
+            <h3 className="text-lg font-semibold mb-4">Social Links</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>GitHub URL</Label>
+                <Input
+                  value={config.links?.github || ''}
+                  onChange={(e) => setConfig({ 
+                    ...config, 
+                    links: { ...config.links, github: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <Label>LinkedIn URL</Label>
+                <Input
+                  value={config.links?.linkedin || ''}
+                  onChange={(e) => setConfig({ 
+                    ...config, 
+                    links: { ...config.links, linkedin: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={config.links?.email || ''}
+                  onChange={(e) => setConfig({ 
+                    ...config, 
+                    links: { ...config.links, email: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <Label>Phone</Label>
+                <Input
+                  value={config.links?.phone || ''}
+                  onChange={(e) => setConfig({ 
+                    ...config, 
+                    links: { ...config.links, phone: e.target.value }
+                  })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Button onClick={handleSave} className="w-full" disabled={saving}>
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'Saving...' : 'Save Configuration'}
+          </Button>
+        </div>
+      </GlassCard>
+    </div>
+  )
 }
 
