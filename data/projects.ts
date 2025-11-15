@@ -1,0 +1,51 @@
+import { Project } from '@/types'
+
+/**
+ * Portfolio projects data
+ * Add your projects here with all relevant information
+ */
+export const projects: Project[] = [
+  {
+    id: '1',
+    title: 'Australian Immigration Visa Portal',
+    description: 'Full-stack web application for Australian immigration visa processing',
+    longDescription: 'A comprehensive platform for managing Australian immigration visa applications. Built with Laravel and PHP, featuring secure document upload, application tracking, and real-time status updates.',
+    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
+    technologies: ['PHP', 'Laravel', 'MySQL', 'JavaScript', 'Bootstrap'],
+    githubUrl: 'https://github.com/SadmanHussainChowdhury',
+    liveUrl: 'https://project.iglweb.com',
+    featured: true,
+    category: 'fullstack',
+  },
+  {
+    id: '2',
+    title: 'Official Tour Management System',
+    description: 'Complete tour booking and management system with payment integration',
+    longDescription: 'A full-featured tour management system that allows users to browse, book, and manage tours. Includes admin panel, payment gateway integration, and email notifications.',
+    image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800',
+    technologies: ['PHP', 'Laravel', 'MySQL', 'Stripe API', 'React'],
+    featured: true,
+    category: 'fullstack',
+  },
+  {
+    id: '3',
+    title: 'E-Commerce Platform',
+    description: 'Modern e-commerce solution with shopping cart and checkout',
+    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800',
+    technologies: ['React', 'Node.js', 'MongoDB', 'Express', 'Stripe'],
+    githubUrl: 'https://github.com/SadmanHussainChowdhury',
+    featured: false,
+    category: 'web',
+  },
+  {
+    id: '4',
+    title: 'Task Management App',
+    description: 'Collaborative task management application with real-time updates',
+    image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800',
+    technologies: ['Next.js', 'TypeScript', 'Prisma', 'PostgreSQL', 'WebSockets'],
+    githubUrl: 'https://github.com/SadmanHussainChowdhury',
+    featured: false,
+    category: 'web',
+  },
+]
+

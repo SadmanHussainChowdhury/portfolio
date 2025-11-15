@@ -1,0 +1,24 @@
+import { Experience } from '@/types'
+
+/**
+ * Professional experience data
+ */
+export const experiences: Experience[] = [
+  {
+    id: '1',
+    company: 'IGL Web Limited',
+    position: 'Software Developer',
+    startDate: 'March 2024',
+    endDate: 'June 2024',
+    location: 'Remote',
+    description: [
+      'Developed and maintained web applications using PHP and Laravel frameworks',
+      'Contributed to project.iglweb.com - Australian immigration visa office project',
+      'Completed a fully official tour project with payment integration',
+      'Implemented full-stack web development solutions',
+      'Collaborated with cross-functional teams to deliver high-quality software',
+    ],
+    technologies: ['PHP', 'Laravel', 'MySQL', 'JavaScript', 'Bootstrap', 'Git'],
+  },
+]
+
