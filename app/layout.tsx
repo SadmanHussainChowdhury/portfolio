@@ -12,6 +12,7 @@ const inter = Inter({ subsets: ['latin'] })
  * Site metadata for SEO
  */
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_CONFIG.url),
   title: {
     default: SITE_CONFIG.name,
     template: `%s | ${SITE_CONFIG.name}`,
