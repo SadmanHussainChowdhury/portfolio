@@ -76,17 +76,33 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, ...updates } = await request.json()
+    const body = await request.json()
+    const { id, ...updates } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })
+    }
+
+    console.log('📝 PUT /api/portfolio/projects - Updating project:', { id, updates })
+    
     const updated = await db.update('projects', id, updates)
     
     if (!updated) {
+      console.error('❌ Project not found:', id)
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
+
+    console.log('✅ Project updated successfully:', updated.id)
     
     return NextResponse.json({ project: updated })
   } catch (error) {
+    console.error('❌ Error updating project:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to update project' },
+      { 
+        error: 'Failed to update project',
+        details: process.env.NODE_ENV === 'development' || process.env.VERCEL === '1' ? errorMessage : undefined
+      },
       { status: 500 }
     )
   }

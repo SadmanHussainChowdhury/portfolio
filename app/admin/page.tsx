@@ -312,20 +312,34 @@ function ProjectsManager({ projects, onUpdate, editingItem, setEditingItem }: an
 
   const handleSave = async () => {
     try {
+      // Validate required fields
+      if (!formData.title || !formData.description) {
+        alert('Please fill in all required fields (Title and Description)')
+        return
+      }
+
       const url = '/api/portfolio/projects'
       const method = editingItem === 'new' ? 'POST' : 'PUT'
       
-      await fetch(url, {
+      const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to ${editingItem === 'new' ? 'create' : 'update'} project`)
+      }
+
+      alert(`Project ${editingItem === 'new' ? 'created' : 'updated'} successfully!`)
       setEditingItem(null)
       setFormData({})
       onUpdate()
     } catch (error) {
       console.error('Failed to save project:', error)
+      alert(error instanceof Error ? error.message : 'Failed to save project. Please try again.')
     }
   }
 
