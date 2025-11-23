@@ -3,7 +3,25 @@
  * Used in production (Vercel) where file system is read-only
  */
 
-import { MongoClient, Db, Collection, Document } from 'mongodb'
+// Dynamic import to handle missing package gracefully
+let MongoClient: any
+let Db: any
+let Collection: any
+let Document: any
+
+try {
+  const mongodb = require('mongodb')
+  MongoClient = mongodb.MongoClient
+  Db = mongodb.Db
+  Collection = mongodb.Collection
+  Document = mongodb.Document
+} catch (error) {
+  console.warn('⚠️ MongoDB package not installed. Run: npm install mongodb')
+  // Export empty functions in development if package is missing
+  if (process.env.NODE_ENV === 'development' && !process.env.VERCEL) {
+    console.warn('⚠️ Using file system database in development')
+  }
+}
 
 // MongoDB URI is optional - will fall back to file system if not provided
 const getMongoUri = () => {
@@ -27,10 +45,10 @@ const options = {
   connectTimeoutMS: 10000,
 }
 
-let client: MongoClient | null = null
-let clientPromise: Promise<MongoClient> | null = null
+let client: any = null
+let clientPromise: Promise<any> | null = null
 
-if (uri) {
+if (uri && MongoClient) {
   if (process.env.NODE_ENV === 'development') {
     // In development mode, use a global variable so that the value
     // is preserved across module reloads caused by HMR (Hot Module Replacement).
@@ -67,7 +85,10 @@ if (uri) {
   }
 }
 
-async function getDb(): Promise<Db> {
+async function getDb(): Promise<any> {
+  if (!MongoClient) {
+    throw new Error('MongoDB package not installed. Please run: npm install mongodb')
+  }
   if (!clientPromise) {
     const errorMsg = process.env.VERCEL === '1' 
       ? 'MongoDB not configured in Vercel. Please set MONGODB_URI environment variable in Vercel dashboard.'
@@ -83,13 +104,14 @@ async function getDb(): Promise<Db> {
   }
 }
 
-async function getCollection<T extends Document>(name: string): Promise<Collection<T>> {
+async function getCollection<T extends any>(name: string): Promise<any> {
   const db = await getDb()
   return db.collection<T>(name)
 }
 
 // Helper function to remove duplicates based on id
 function removeDuplicates<T extends { id?: string }>(items: T[]): T[] {
+  if (!items || !Array.isArray(items)) return []
   const seen = new Set<string>()
   return items.filter((item) => {
     const id = item.id
@@ -104,7 +126,10 @@ function removeDuplicates<T extends { id?: string }>(items: T[]): T[] {
 
 export const dbMongo = {
   // Read data from MongoDB
-  async read<T extends Document>(collection: string): Promise<T[]> {
+  async read<T extends any>(collection: string): Promise<T[]> {
+    if (!MongoClient) {
+      throw new Error('MongoDB package not installed. Please run: npm install mongodb')
+    }
     try {
       const coll = await getCollection<T>(collection)
       const result = await coll.find({}).toArray() as T[]
@@ -128,7 +153,10 @@ export const dbMongo = {
   },
 
   // Write data to MongoDB (replace all)
-  async write<T extends Document>(collection: string, data: T[]): Promise<void> {
+  async write<T extends any>(collection: string, data: T[]): Promise<void> {
+    if (!MongoClient) {
+      throw new Error('MongoDB package not installed. Please run: npm install mongodb')
+    }
     try {
       const coll = await getCollection<T>(collection)
       await coll.deleteMany({})
@@ -142,7 +170,10 @@ export const dbMongo = {
   },
 
   // Find one item by ID
-  async findOne<T extends Document & { id: string }>(collection: string, id: string): Promise<T | null> {
+  async findOne<T extends any & { id: string }>(collection: string, id: string): Promise<T | null> {
+    if (!MongoClient) {
+      throw new Error('MongoDB package not installed. Please run: npm install mongodb')
+    }
     try {
       const coll = await getCollection<T>(collection)
       return await coll.findOne({ id } as any) as T | null
@@ -153,7 +184,10 @@ export const dbMongo = {
   },
 
   // Create new item
-  async create<T extends Document & { id: string }>(collection: string, item: T): Promise<T> {
+  async create<T extends any & { id: string }>(collection: string, item: T): Promise<T> {
+    if (!MongoClient) {
+      throw new Error('MongoDB package not installed. Please run: npm install mongodb')
+    }
     try {
       const coll = await getCollection<T>(collection)
       await coll.insertOne(item as any)
@@ -165,7 +199,10 @@ export const dbMongo = {
   },
 
   // Update item
-  async update<T extends Document & { id: string }>(collection: string, id: string, updates: Partial<T>): Promise<T | null> {
+  async update<T extends any & { id: string }>(collection: string, id: string, updates: Partial<T>): Promise<T | null> {
+    if (!MongoClient) {
+      throw new Error('MongoDB package not installed. Please run: npm install mongodb')
+    }
     try {
       const coll = await getCollection<T>(collection)
       const result = await coll.findOneAndUpdate(
@@ -182,8 +219,11 @@ export const dbMongo = {
 
   // Delete item
   async delete(collection: string, id: string): Promise<boolean> {
+    if (!MongoClient) {
+      throw new Error('MongoDB package not installed. Please run: npm install mongodb')
+    }
     try {
-      const coll = await getCollection<Document & { id: string }>(collection)
+      const coll = await getCollection<any & { id: string }>(collection)
       const result = await coll.deleteOne({ id } as any)
       return result.deletedCount > 0
     } catch (error) {

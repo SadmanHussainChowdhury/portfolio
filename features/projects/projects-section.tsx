@@ -1,14 +1,15 @@
 'use client'
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { ExternalLink, Github } from "lucide-react"
+import { ExternalLink, Github, Search, X } from "lucide-react"
 import { GlassCard } from "@/components/glass-card"
 import { Button } from "@/components/ui/button"
-import { Project } from "@/types"
+import { Input } from "@/components/ui/input"
+import { Project, ProjectWithTags } from "@/types"
 
 /**
  * Project Card Component
@@ -94,6 +95,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 export function ProjectsSection() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
 
   const fetchProjects = React.useCallback(() => {
     fetch('/api/portfolio/projects')
@@ -138,6 +142,53 @@ export function ProjectsSection() {
     }
   }, [fetchProjects])
 
+  // Extract all unique tags and categories - MUST be before any early returns
+  const allTags = useMemo(() => {
+    const tags = new Set<string>()
+    projects.forEach(p => {
+      const projectWithTags = p as ProjectWithTags
+      if (projectWithTags.tags) {
+        projectWithTags.tags.forEach(tag => tags.add(tag))
+      }
+    })
+    return Array.from(tags).sort()
+  }, [projects])
+
+  const categories = ['all', 'web', 'mobile', 'fullstack', 'other'] as const
+
+  // Filter projects - MUST be before any early returns
+  const filteredProjects = useMemo(() => {
+    return projects.filter(project => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesSearch = 
+          project.title.toLowerCase().includes(query) ||
+          project.description.toLowerCase().includes(query) ||
+          project.technologies.some(tech => tech.toLowerCase().includes(query))
+        if (!matchesSearch) return false
+      }
+
+      // Category filter
+      if (selectedCategory !== 'all' && project.category !== selectedCategory) {
+        return false
+      }
+
+      // Tags filter
+      if (selectedTags.size > 0) {
+        const projectWithTags = project as ProjectWithTags
+        const projectTags = projectWithTags.tags || []
+        const hasSelectedTag = Array.from(selectedTags).some(tag => 
+          projectTags.includes(tag)
+        )
+        if (!hasSelectedTag) return false
+      }
+
+      return true
+    })
+  }, [projects, searchQuery, selectedCategory, selectedTags])
+
+  // Early returns AFTER all hooks
   if (loading) {
     return (
       <section id="projects" className="py-20 md:py-32">
@@ -158,8 +209,21 @@ export function ProjectsSection() {
     )
   }
 
-  const featuredProjects = projects.filter(p => p.featured)
-  const otherProjects = projects.filter(p => !p.featured)
+  // Calculate featured and other projects after early returns
+  const featuredProjects = filteredProjects.filter(p => p.featured)
+  const otherProjects = filteredProjects.filter(p => !p.featured)
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(tag)) {
+        newSet.delete(tag)
+      } else {
+        newSet.add(tag)
+      }
+      return newSet
+    })
+  }
 
   return (
     <section id="projects" className="py-20 md:py-32">
@@ -178,9 +242,85 @@ export function ProjectsSection() {
           >
             Featured Projects
           </motion.h2>
-          <p className="text-center text-muted-foreground mb-16 max-w-2xl mx-auto text-lg">
+          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto text-lg">
             A selection of projects I've worked on, showcasing my skills and experience
           </p>
+
+          {/* Search and Filters */}
+          <div className="max-w-4xl mx-auto mb-12 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search projects by name, description, or technology..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-12 h-12 text-lg"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Category Filters */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {categories.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                  className="capitalize"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+
+            {/* Tag Filters */}
+            {allTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center">
+                {allTags.map(tag => (
+                  <Button
+                    key={tag}
+                    variant={selectedTags.has(tag) ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => toggleTag(tag)}
+                  >
+                    {tag}
+                    {selectedTags.has(tag) && (
+                      <X className="w-3 h-3 ml-2" />
+                    )}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {/* Active Filters Count */}
+            {(searchQuery || selectedCategory !== 'all' || selectedTags.size > 0) && (
+              <div className="text-center text-sm text-muted-foreground">
+                Showing {filteredProjects.length} of {projects.length} projects
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setSelectedCategory('all')
+                    setSelectedTags(new Set())
+                  }}
+                  className="ml-2"
+                >
+                  Clear filters
+                </Button>
+              </div>
+            )}
+          </div>
 
           {/* Featured Projects */}
           {featuredProjects.length > 0 && (

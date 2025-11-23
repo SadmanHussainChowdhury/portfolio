@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Send, Mail, Phone, MapPin } from "lucide-react"
+import { Send, Mail, Phone, MapPin, MessageCircle, Download } from "lucide-react"
 import { GlassCard } from "@/components/glass-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -212,6 +212,45 @@ export function ContactSection() {
                       <p className="text-sm text-muted-foreground">Location</p>
                       <p className="text-foreground">Faridpur, Bangladesh</p>
                     </div>
+                  </div>
+                </div>
+                <div className="mt-8 pt-8 border-t border-border/50">
+                  <h4 className="text-lg font-semibold mb-4">Quick Actions</h4>
+                  <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      asChild
+                    >
+                      <a href="/resume.pdf" download onClick={async () => {
+                        try {
+                          await fetch('/api/resume/download', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              ip: 'client',
+                              userAgent: navigator.userAgent,
+                              referrer: document.referrer,
+                            }),
+                          })
+                        } catch (error) {
+                          console.error('Failed to track download:', error)
+                        }
+                      }}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Resume
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      asChild
+                    >
+                      <a href={`https://wa.me/${SITE_CONFIG.links.phone?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        WhatsApp
+                      </a>
+                    </Button>
                   </div>
                 </div>
               </GlassCard>

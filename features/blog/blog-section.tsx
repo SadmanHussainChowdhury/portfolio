@@ -5,9 +5,9 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, Clock } from "lucide-react"
+import { Calendar, Clock, Tag } from "lucide-react"
 import { GlassCard } from "@/components/glass-card"
-import { BlogPost } from "@/types"
+import { BlogPost, BlogPostEnhanced } from "@/types"
 
 /**
  * Blog Section Component
@@ -16,6 +16,7 @@ import { BlogPost } from "@/types"
 export function BlogSection() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   const fetchBlogPosts = React.useCallback(() => {
     fetch('/api/portfolio/blog')
@@ -88,12 +89,48 @@ export function BlogSection() {
           >
             Blog
           </motion.h2>
-          <p className="text-center text-muted-foreground mb-16 max-w-2xl mx-auto text-lg">
+          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto text-lg">
             Thoughts, tutorials, and insights about web development
           </p>
 
+          {/* Categories */}
+          {(() => {
+            const categories = ['all', ...Array.from(new Set(blogPosts.map(p => (p as BlogPostEnhanced).category).filter(Boolean)))]
+            if (categories.length > 1) {
+              return (
+                <div className="flex flex-wrap gap-2 justify-center mb-12">
+                  {categories.map(category => (
+                    <motion.button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedCategory === category
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </motion.button>
+                  ))}
+                </div>
+              )
+            }
+            return null
+          })()}
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {blogPosts.map((post, index) => (
+            {blogPosts
+              .filter(post => {
+                if (selectedCategory === 'all') return true
+                const enhanced = post as BlogPostEnhanced
+                return enhanced.category === selectedCategory
+              })
+              .map((post, index) => {
+                const enhanced = post as BlogPostEnhanced
+                const readTime = enhanced.readTime || Math.ceil((post.content?.length || post.excerpt.length) / 200)
+                return (
               <motion.div
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -120,10 +157,14 @@ export function BlogSection() {
                         <Calendar className="h-4 w-4 mr-1" />
                         {new Date(post.publishedAt).toLocaleDateString()}
                       </div>
-                      {post.readTime && (
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {readTime} min read
+                      </div>
+                      {enhanced.category && (
                         <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {post.readTime} min
+                          <Tag className="h-4 w-4 mr-1" />
+                          {enhanced.category}
                         </div>
                       )}
                     </div>
@@ -160,7 +201,8 @@ export function BlogSection() {
                   </div>
                 </GlassCard>
               </motion.div>
-            ))}
+                )
+              })}
           </div>
         </motion.div>
       </div>

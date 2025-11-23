@@ -17,16 +17,17 @@ import {
   Save,
   X,
   Download,
-  Mail
+  Mail,
+  Star
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { GlassCard } from '@/components/glass-card'
-import { Project, Experience, Skill, Service, BlogPost } from '@/types'
+import { Project, Experience, Skill, Service, BlogPost, Testimonial, Achievement, SocialProof } from '@/types'
 
-type Tab = 'dashboard' | 'projects' | 'experience' | 'skills' | 'services' | 'blog' | 'messages' | 'config'
+type Tab = 'dashboard' | 'projects' | 'experience' | 'skills' | 'services' | 'blog' | 'messages' | 'testimonials' | 'achievements' | 'social-proof' | 'analytics' | 'newsletter' | 'config'
 
 export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -42,6 +43,11 @@ export default function AdminPanel() {
   const [services, setServices] = useState<Service[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [messages, setMessages] = useState<any[]>([])
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [socialProof, setSocialProof] = useState<SocialProof[]>([])
+  const [analytics, setAnalytics] = useState<any>(null)
+  const [subscribers, setSubscribers] = useState<any[]>([])
 
   useEffect(() => {
     checkAuth()
@@ -73,22 +79,38 @@ export default function AdminPanel() {
 
   const loadData = async () => {
     try {
-      const [projectsRes, expRes, skillsRes, servicesRes, blogRes, messagesRes] = await Promise.all([
+      const [
+        projectsRes, expRes, skillsRes, servicesRes, blogRes, messagesRes,
+        testimonialsRes, achievementsRes, socialProofRes, analyticsRes, newsletterRes
+      ] = await Promise.all([
         fetch('/api/portfolio/projects'),
         fetch('/api/portfolio/experience'),
         fetch('/api/portfolio/skills'),
         fetch('/api/portfolio/services'),
         fetch('/api/portfolio/blog'),
         fetch('/api/portfolio/messages'),
+        fetch('/api/portfolio/testimonials'),
+        fetch('/api/portfolio/achievements'),
+        fetch('/api/portfolio/social-proof'),
+        fetch('/api/analytics'),
+        fetch('/api/newsletter'),
       ])
 
-      const [projectsData, expData, skillsData, servicesData, blogData, messagesData] = await Promise.all([
+      const [
+        projectsData, expData, skillsData, servicesData, blogData, messagesData,
+        testimonialsData, achievementsData, socialProofData, analyticsData, newsletterData
+      ] = await Promise.all([
         projectsRes.json(),
         expRes.json(),
         skillsRes.json(),
         servicesRes.json(),
         blogRes.json(),
         messagesRes.json(),
+        testimonialsRes.json(),
+        achievementsRes.json(),
+        socialProofRes.json(),
+        analyticsRes.json(),
+        newsletterRes.json(),
       ])
 
       setProjects(projectsData.projects || [])
@@ -97,6 +119,11 @@ export default function AdminPanel() {
       setServices(servicesData.services || [])
       setBlogPosts(blogData.blogPosts || [])
       setMessages(messagesData.messages || [])
+      setTestimonials(testimonialsData.testimonials || [])
+      setAchievements(achievementsData.achievements || [])
+      setSocialProof(socialProofData.socialProof || [])
+      setAnalytics(analyticsData)
+      setSubscribers(newsletterData.subscribers || [])
     } catch (error) {
       console.error('Failed to load data:', error)
     }
@@ -154,7 +181,12 @@ export default function AdminPanel() {
                   { id: 'skills', label: 'Skills', icon: Code },
                   { id: 'services', label: 'Services', icon: FileText },
                   { id: 'blog', label: 'Blog', icon: FileText },
+                  { id: 'testimonials', label: 'Testimonials', icon: Award },
+                  { id: 'achievements', label: 'Achievements', icon: Award },
+                  { id: 'social-proof', label: 'Social Proof', icon: Code },
                   { id: 'messages', label: 'Messages', icon: Mail },
+                  { id: 'analytics', label: 'Analytics', icon: LayoutDashboard },
+                  { id: 'newsletter', label: 'Newsletter', icon: Mail },
                   { id: 'config', label: 'Settings', icon: Settings },
                 ].map((tab) => {
                   const Icon = tab.icon
@@ -234,6 +266,36 @@ export default function AdminPanel() {
                 messages={messages}
                 onUpdate={loadData}
               />
+            )}
+            {activeTab === 'testimonials' && (
+              <TestimonialsManager 
+                testimonials={testimonials}
+                onUpdate={loadData}
+                editingItem={editingItem}
+                setEditingItem={setEditingItem}
+              />
+            )}
+            {activeTab === 'achievements' && (
+              <AchievementsManager 
+                achievements={achievements}
+                onUpdate={loadData}
+                editingItem={editingItem}
+                setEditingItem={setEditingItem}
+              />
+            )}
+            {activeTab === 'social-proof' && (
+              <SocialProofManager 
+                socialProof={socialProof}
+                onUpdate={loadData}
+                editingItem={editingItem}
+                setEditingItem={setEditingItem}
+              />
+            )}
+            {activeTab === 'analytics' && (
+              <AnalyticsManager analytics={analytics} />
+            )}
+            {activeTab === 'newsletter' && (
+              <NewsletterManager subscribers={subscribers} onUpdate={loadData} />
             )}
             {activeTab === 'config' && <ConfigManager />}
           </main>

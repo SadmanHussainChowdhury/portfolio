@@ -83,6 +83,25 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#6366f1" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Person',
+              name: SITE_CONFIG.name,
+              jobTitle: 'Full-Stack Developer',
+              url: SITE_CONFIG.url,
+              email: SITE_CONFIG.links.email,
+              telephone: SITE_CONFIG.links.phone,
+              sameAs: [
+                SITE_CONFIG.links.github,
+                SITE_CONFIG.links.linkedin,
+                SITE_CONFIG.links.twitter,
+              ].filter(Boolean),
+            }),
+          }}
+        />
       </head>
       <body className={inter.className}>
         <ThemeProvider
